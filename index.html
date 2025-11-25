@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Brackify</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #080910;
+      --card: #151827;
+      --accent: #ff79c6;
+      --accent-soft: #bd93f9;
+      --text: #f8f8f2;
+      --text-muted: #b0b3c5;
+      --danger: #ff5555;
+      --radius: 12px;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #282a36 0, #05060b 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: linear-gradient(145deg, #12131f, #080910 55%, #181829);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 24px 20px 28px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 span.logo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      box-shadow: 0 0 14px rgba(255, 121, 198, 0.8);
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 360px;
+      text-align: right;
+    }
+
+    .section {
+      background: radial-gradient(circle at top left, #202237, #0b0c14 65%);
+      border-radius: var(--radius);
+      padding: 16px 16px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .search-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      flex: 1 1 220px;
+      padding: 9px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(2, 2, 8, 0.85);
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+    }
+
+    input[type="text"]::placeholder {
+      color: #64677b;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: transform 0.08s ease, box-shadow 0.08s ease,
+        background 0.12s ease;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+      color: #0b0b12;
+      box-shadow: 0 0 18px rgba(255, 121, 198, 0.5);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    button:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.6);
+    }
+
+    button:not(:disabled):active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    }
+
+    select {
+      width: 100%;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(5, 6, 14, 0.95);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      font-size: 14px;
+      margin-top: 6px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .status {
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .status.loading {
+      color: var(--accent-soft);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.ok {
+      color: #7be5b8;
+    }
+
+    .bracket-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+    }
+
+    .matchup {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .song-btn {
+      text-align: left;
+      padding: 12px 13px;
+      border-radius: 14px;
+      background: rgba(9, 11, 24, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .song-btn span.title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .song-btn span.meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .song-btn .vs-tag {
+      position: absolute;
+      top: 7px;
+      right: 10px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .bye-note {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .result {
+      text-align: center;
+      padding: 14px 8px 4px;
+    }
+
+    .winner-tagline {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .winner-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .winner-artist {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .winner-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 11px;
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 4px;
+    }
+
+    .winner-chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      gap: 10px;
+    }
+
+    .footer-row a {
+      color: var(--accent-soft);
+      text-decoration: none;
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 18px 14px 20px;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      header p {
+        text-align: left;
+        max-width: none;
+      }
+      .matchup {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1><span class="logo-dot"></span>BRACKIFY</h1>
+      <p>Generate a song-vs-song bracket from any artist’s discography and
+        crown your true favorite track.</p>
+    </header>
+
+    <!-- Search section -->
+    <section class="section" id="search-section">
+      <div class="section-title">1 · Pick an artist</div>
+      <div class="search-row">
+        <input
+          type="text"
+          id="artist-input"
+          placeholder="Type an artist name…"
+        />
+        <button class="primary" id="search-btn">Search</button>
+      </div>
+      <p class="hint">
+        Data is pulled live from MusicBrainz (public music database).
+      </p>
+      <div id="search-status" class="status"></div>
+    </section>
+
+    <!-- Artist selection -->
+    <section class="section" id="artist-section" style="display:none;">
+      <div class="section-title">2 · Confirm artist</div>
+      <label for="artist-select">Select the correct match:</label>
+      <select id="artist-select"></select>
+      <p class="hint">
+        If there are multiple entries (live acts, side projects, etc.), pick the main one.
+      </p>
+      <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
+        <button class="secondary" id="back-to-search-btn">Back</button>
+        <button class="primary" id="load-songs-btn">Load songs</button>
+      </div>
+      <div id="artist-status" class="status"></div>
+    </section>
+
+    <!-- Bracket section -->
+    <section class="section" id="bracket-section" style="display:none;">
+      <div class="section-title">3 · Vote your way to a winner</div>
+
+      <div class="bracket-meta">
+        <div>
+          <div id="artist-label" style="font-size:13px; margin-bottom:3px;"></div>
+          <div id="song-count-label" style="font-size:12px; color:var(--text-muted);"></div>
+        </div>
+        <div>
+          <div class="pill">
+            <span class="pill-dot"></span>
+            <span id="round-label">Round 1</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="match-label" style="font-size:13px; margin-bottom:10px; color:var(--text-muted);">
+        Match 1
+      </div>
+
+      <div id="matchup-container" class="matchup" style="display:none;">
+        <button class="song-btn" id="song-a-btn">
+          <span class="vs-tag">Pick</span>
+          <span class="title" id="song-a-title">Song A</span>
+          <span class="meta" id="song-a-meta"></span>
+        </button>
+        <button class="song-btn" id="song-b-btn">
+          <span class="vs-tag">Pick</span>
+          <span class="title" id="song-b-title">Song B</span>
+          <span class="meta" id="song-b-meta"></span>
+        </button>
+      </div>
+
+      <div id="bye-note" class="bye-note" style="display:none;">
+        Odd number of songs this round — one track gets an automatic bye.
+      </div>
+
+      <div id="bracket-status" class="status" style="margin-top:10px;"></div>
+    </section>
+
+    <!-- Result section -->
+    <section class="section" id="result-section" style="display:none;">
+      <div class="section-title">4 · Final result</div>
+      <div class="result">
+        <div class="winner-tagline">Your bracket winner</div>
+        <div class="winner-title" id="winner-title">Song Name</div>
+        <div class="winner-artist" id="winner-artist">by Artist</div>
+        <div class="winner-chip">
+          <span class="winner-chip-dot"></span>
+          <span id="winner-meta">Single · Year</span>
+        </div>
+        <p class="hint" style="margin-top:8px;">
+          Screenshot and send to your group chat so they can judge your taste.
+        </p>
+        <div style="margin-top:14px; display:flex; gap:8px; justify-content:center;">
+          <button class="secondary" id="restart-btn">New artist</button>
+          <button class="primary" id="reseed-btn">New bracket, same artist</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer-row">
+      <span>Built around the MusicBrainz public API. Be nice to their servers.</span>
+      <span>Repo idea: <code>brackify</code> · put this on GitHub Pages 💽</span>
+    </div>
+  </div>
+
+  <script>
+    // --------- State ---------
+    let currentArtist = null;
+    let recordings = [];
+    let uniqueSongs = [];
+    let currentRound = [];
+    let winners = [];
+    let matchIndex = 0;
+    let roundNumber = 1;
+
+    // Store minimal song metadata for future upgrades (album/year etc.)
+    // For now, we’ll just keep title + maybe first release year if available.
+    let songMetaMap = new Map();
+
+    const MB_BASE = "https://musicbrainz.org/ws/2";
+
+    // --------- DOM helpers ---------
+    const $ = (id) => document.getElementById(id);
+
+    const searchSection = $("search-section");
+    const artistSection = $("artist-section");
+    const bracketSection = $("bracket-section");
+    const resultSection = $("result-section");
+
+    const searchStatus = $("search-status");
+    const artistStatus = $("artist-status");
+    const bracketStatus = $("bracket-status");
+
+    const artistInput = $("artist-input");
+    const artistSelect = $("artist-select");
+    const artistLabel = $("artist-label");
+    const songCountLabel = $("song-count-label");
+    const roundLabel = $("round-label");
+    const matchLabel = $("match-label");
+    const matchupContainer = $("matchup-container");
+    const byeNote = $("bye-note");
+
+    const songABtn = $("song-a-btn");
+    const songA_title = $("song-a-title");
+    const songA_meta = $("song-a-meta");
+    const songBBtn = $("song-b-btn");
+    const songB_title = $("song-b-title");
+    const songB_meta = $("song-b-meta");
+
+    const winnerTitle = $("winner-title");
+    const winnerArtist = $("winner-artist");
+    const winnerMeta = $("winner-meta");
+
+    // --------- Utility functions ---------
+    function setStatus(el, text, type = "") {
+      el.textContent = text || "";
+      el.className = "status" + (type ? " " + type : "");
+    }
+
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function createRound(songList) {
+      const round = [];
+      for (let i = 0; i < songList.length; i += 2) {
+        if (i + 1 < songList.length) {
+          round.push([songList[i], songList[i + 1]]);
+        } else {
+          // Odd one out gets a bye (no opponent)
+          round.push([songList[i], null]);
+        }
+      }
+      return round;
+    }
+
+    function formatMetaForSong(title) {
+      const meta = songMetaMap.get(title);
+      if (!meta) return "";
+      const parts = [];
+      if (meta.release) parts.push(meta.release);
+      if (meta.year) parts.push(meta.year);
+      return parts.join(" · ");
+    }
+
+    // --------- MusicBrainz API calls ---------
+    async function searchArtistsByName(name) {
+      const query = encodeURIComponent(name);
+      const url = `${MB_BASE}/artist?query=${query}&fmt=json&limit=10`;
+      const res = await fetch(url, {
+        headers: {
+          // UA hint; browser will override but we show intent
+          "Accept": "application/json"
+        }
+      });
+      if (!res.ok) {
+        throw new Error("MusicBrainz error: " + res.status);
+      }
+      const data = await res.json();
+      return data.artists || [];
+    }
+
+    async function fetchRecordingsForArtist(artistId) {
+      // We’ll only grab the first 100 recordings for now to keep it light.
+      // You can later add pagination with offset=100, 200, etc.
+      const url = `${MB_BASE}/recording?artist=${artistId}&fmt=json&limit=100`;
+      const res = await fetch(url, {
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+      if (!res.ok) {
+        throw new Error("MusicBrainz error: " + res.status);
+      }
+      const data = await res.json();
+      return data.recordings || [];
+    }
+
+    // --------- Bracket logic ---------
+    function startBracketForSongs(songTitles) {
+      if (!songTitles || songTitles.length < 2) {
+        setStatus(
+          bracketStatus,
+          "Not enough distinct songs found to build a bracket.",
+          "error"
+        );
+        matchupContainer.style.display = "none";
+        byeNote.style.display = "none";
+        return;
+      }
+
+      winners = [];
+      matchIndex = 0;
+      roundNumber = 1;
+
+      const shuffled = shuffleArray(songTitles);
+      currentRound = createRound(shuffled);
+
+      roundLabel.textContent = `Round ${roundNumber}`;
+      updateMatchupDisplay();
+    }
+
+    function updateMatchupDisplay() {
+      if (!currentRound || currentRound.length === 0) return;
+
+      // Find next valid matchup
+      while (matchIndex < currentRound.length) {
+        const [songA, songB] = currentRound[matchIndex];
+        if (!songA && !songB) {
+          matchIndex++;
+          continue;
+        }
+        break;
+      }
+
+      if (matchIndex >= currentRound.length) {
+        // Round finished
+        if (winners.length === 1) {
+          // We have a champion
+          showWinner(winners[0]);
+          return;
+        }
+        // Next round
+        roundNumber++;
+        roundLabel.textContent = `Round ${roundNumber}`;
+        const nextRound = createRound(winners);
+        currentRound = nextRound;
+        winners = [];
+        matchIndex = 0;
+        updateMatchupDisplay();
+        return;
+      }
+
+      const [songA, songB] = currentRound[matchIndex];
+      const totalMatches = currentRound.length;
+      const displayMatchIndex = matchIndex + 1;
+      matchLabel.textContent = `Match ${displayMatchIndex} of ${totalMatches}`;
+
+      // Show matchup UI
+      matchupContainer.style.display = "grid";
+
+      if (songA) {
+        songABtn.disabled = false;
+        songA_title.textContent = songA;
+        songA_meta.textContent = formatMetaForSong(songA) || "";
+      } else {
+        songABtn.disabled = true;
+        songA_title.textContent = "(empty)";
+        songA_meta.textContent = "";
+      }
+
+      if (songB) {
+        songBBtn.disabled = false;
+        songB_title.textContent = songB;
+        songB_meta.textContent = formatMetaForSong(songB) || "";
+      } else {
+        songBBtn.disabled = true;
+        songB_title.textContent = "(bye)";
+        songB_meta.textContent = "";
+      }
+
+      // If there is a bye situation (songB is null), auto-advance songA
+      if (songA && !songB) {
+        byeNote.style.display = "block";
+        // Give a tiny delay so user sees it
+        setTimeout(() => {
+          winners.push(songA);
+          matchIndex++;
+          updateMatchupDisplay();
+        }, 600);
+      } else {
+        byeNote.style.display = "none";
+      }
+
+      setStatus(
+        bracketStatus,
+        `Songs left this round: ${currentRound.length - matchIndex}`,
+        "ok"
+      );
+    }
+
+    function chooseWinner(choice) {
+      if (!choice) return;
+      winners.push(choice);
+      matchIndex++;
+      updateMatchupDisplay();
+    }
+
+    function showWinner(title) {
+      bracketSection.style.display = "none";
+      resultSection.style.display = "block";
+
+      winnerTitle.textContent = title;
+      winnerArtist.textContent = currentArtist ? `by ${currentArtist.name}` : "";
+      const metaText = formatMetaForSong(title) || "From their discography";
+      winnerMeta.textContent = metaText;
+    }
+
+    function resetAll() {
+      currentArtist = null;
+      recordings = [];
+      uniqueSongs = [];
+      songMetaMap.clear();
+
+      searchSection.style.display = "block";
+      artistSection.style.display = "none";
+      bracketSection.style.display = "none";
+      resultSection.style.display = "none";
+
+      artistInput.value = "";
+      setStatus(searchStatus, "");
+      setStatus(artistStatus, "");
+      setStatus(bracketStatus, "");
+    }
+
+    function reseedSameArtist() {
+      resultSection.style.display = "none";
+      bracketSection.style.display = "block";
+      startBracketForSongs(uniqueSongs);
+    }
+
+    // --------- Event listeners ---------
+    $("search-btn").addEventListener("click", async () => {
+      const name = artistInput.value.trim();
+      if (!name) {
+        setStatus(searchStatus, "Type an artist name first.", "error");
+        return;
+      }
+
+      setStatus(searchStatus, "Searching artists…", "loading");
+
+      try {
+        const artists = await searchArtistsByName(name);
+        if (!artists.length) {
+          setStatus(
+            searchStatus,
+            "No artists found. Try a different spelling.",
+            "error"
+          );
+          return;
+        }
+
+        // Populate select
+        artistSelect.innerHTML = "";
+        artists.forEach((a) => {
+          const opt = document.createElement("option");
+          const type = a.type ? ` · ${a.type}` : "";
+          const country = a.country ? ` · ${a.country}` : "";
+          opt.value = a.id;
+          opt.textContent = `${a.name}${type}${country}`;
+          artistSelect.appendChild(opt);
+        });
+
+        currentArtist = {
+          id: artists[0].id,
+          name: artists[0].name
+        };
+
+        searchSection.style.display = "none";
+        artistSection.style.display = "block";
+        setStatus(searchStatus, "");
+        setStatus(
+          artistStatus,
+          `Found ${artists.length} result(s). Pick the right one and load songs.`,
+          "ok"
+        );
+      } catch (err) {
+        console.error(err);
+        setStatus(
+          searchStatus,
+          "Error contacting MusicBrainz. Try again in a bit.",
+          "error"
+        );
+      }
+    });
+
+    $("back-to-search-btn").addEventListener("click", () => {
+      artistSection.style.display = "none";
+      searchSection.style.display = "block";
+      setStatus(artistStatus, "");
+    });
+
+    $("artist-select").addEventListener("change", () => {
+      const selectedText =
+        artistSelect.options[artistSelect.selectedIndex]?.textContent || "";
+      const selectedId = artistSelect.value;
+      currentArtist = {
+        id: selectedId,
+        name: selectedText.split("·")[0].trim()
+      };
+    });
+
+    $("load-songs-btn").addEventListener("click", async () => {
+      if (!currentArtist) {
+        setStatus(artistStatus, "Select an artist first.", "error");
+        return;
+      }
+
+      setStatus(artistStatus, "Loading recordings (songs)…", "loading");
+
+      try {
+        const recs = await fetchRecordingsForArtist(currentArtist.id);
+        recordings = recs;
+
+        songMetaMap.clear();
+        const titleSet = new Set();
+
+        recs.forEach((rec) => {
+          if (!rec.title) return;
+          const title = rec.title.trim();
+          if (!title) return;
+
+          // Use first occurrence to store metadata
+          if (!titleSet.has(title)) {
+            titleSet.add(title);
+
+            // Crude metadata: just first release + year if present
+            let releaseName = "";
+            let year = "";
+            if (rec["releases"] && rec["releases"].length > 0) {
+              const rel = rec["releases"][0];
+              releaseName = rel.title || "";
+              if (rel.date && typeof rel.date === "string") {
+                year = rel.date.slice(0, 4);
+              }
+            }
+            songMetaMap.set(title, { release: releaseName, year });
+          }
+        });
+
+        uniqueSongs = Array.from(titleSet);
+
+        if (uniqueSongs.length < 2) {
+          setStatus(
+            artistStatus,
+            "Not enough distinct songs to build a bracket for this artist.",
+            "error"
+          );
+          return;
+        }
+
+        artistSection.style.display = "none";
+        bracketSection.style.display = "block";
+
+        artistLabel.textContent = `Artist: ${currentArtist.name}`;
+        songCountLabel.textContent = `Songs loaded: ${uniqueSongs.length} (first 100 recordings)`;
+
+        setStatus(
+          bracketStatus,
+          "Bracket ready. Click on the song you like more in each matchup.",
+          "ok"
+        );
+
+        startBracketForSongs(uniqueSongs);
+      } catch (err) {
+        console.error(err);
+        setStatus(
+          artistStatus,
+          "Error loading recordings. Try again or pick a different artist.",
+          "error"
+        );
+      }
+    });
+
+    songABtn.addEventListener("click", () => {
+      const title = songA_title.textContent;
+      if (!title || title === "(empty)") return;
+      chooseWinner(title);
+    });
+
+    songBBtn.addEventListener("click", () => {
+      const title = songB_title.textContent;
+      if (!title || title === "(bye)") return;
+      chooseWinner(title);
+    });
+
+    $("restart-btn").addEventListener("click", () => {
+      resetAll();
+    });
+
+    $("reseed-btn").addEventListener("click", () => {
+      reseedSameArtist();
+    });
+
+    // init
+    resetAll();
+  </script>
+</body>
+</html>
