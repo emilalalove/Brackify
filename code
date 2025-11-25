@@ -1,0 +1,91 @@
+function doGet(e) {
+  return HtmlService
+    .createTemplateFromFile('Index')
+    .evaluate()
+    .setTitle('Brackify')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+const MB_BASE = 'https://musicbrainz.org/ws/2';
+
+function searchArtists(name) {
+  if (!name) return [];
+  var query = encodeURIComponent(name);
+  var url = MB_BASE + '/artist?query=' + query + '&fmt=json&limit=10';
+
+  var res = UrlFetchApp.fetch(url, {
+    method: 'get',
+    muteHttpExceptions: true,
+    headers: { 'Accept': 'application/json' }
+  });
+
+  if (res.getResponseCode() !== 200) {
+    throw new Error('MusicBrainz error: ' + res.getResponseCode());
+  }
+
+  var data = JSON.parse(res.getContentText());
+  var artists = data.artists || [];
+
+  return artists.map(function(a) {
+    return {
+      id: a.id,
+      name: a.name,
+      type: a.type || '',
+      country: a.country || '',
+      disambiguation: a.disambiguation || ''
+    };
+  });
+}
+
+function loadSongs(artistId) {
+  if (!artistId) return { songs: [] };
+  var url = MB_BASE + '/recording?artist=' + artistId + '&fmt=json&limit=100';
+
+  var res = UrlFetchApp.fetch(url, {
+    method: 'get',
+    muteHttpExceptions: true,
+    headers: { 'Accept': 'application/json' }
+  });
+
+  if (res.getResponseCode() !== 200) {
+    throw new Error('MusicBrainz error: ' + res.getResponseCode());
+  }
+
+  var data = JSON.parse(res.getContentText());
+  var recs = data.recordings || [];
+
+  var titleSet = {};
+  var metaMap = {};
+
+  recs.forEach(function(rec) {
+    if (!rec.title) return;
+    var title = rec.title.trim();
+    if (!title) return;
+
+    if (!titleSet[title]) {
+      titleSet[title] = true;
+
+      var releaseName = '';
+      var year = '';
+
+      if (rec.releases && rec.releases.length > 0) {
+        var rel = rec.releases[0];
+        releaseName = rel.title || '';
+        if (rel.date && typeof rel.date === 'string') {
+          year = rel.date.slice(0, 4);
+        }
+      }
+
+      metaMap[title] = { title: title, release: releaseName, year: year };
+    }
+  });
+
+  return {
+    songs: Object.keys(titleSet),
+    meta: metaMap
+  };
+}
